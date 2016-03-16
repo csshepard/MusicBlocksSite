@@ -1,6 +1,7 @@
 import sqlite3
 import os
-from flask import Flask, render_template, g
+import subprocess
+from flask import Flask, flash, render_template, g
 from werkzeug.utils import secure_filename
 from werkzeug.contrib.fixers import ProxyFix
 from flask_bootstrap import Bootstrap
@@ -10,7 +11,8 @@ from wtforms import StringField, SelectField, SubmitField
 from wtforms.validators import DataRequired
 
 
-PATH = os.path.dirname('/home/pi/MusicBlocks/')
+#PATH = os.path.dirname('/home/pi/MusicBlocks/')
+PATH = os.path.dirname(__file__)
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -40,6 +42,13 @@ class ChangeSong(Form):
     submit = SubmitField('Submit')
 
 
+class AdvancedForm(Form):
+    shutdown = SubmitField('Shutdown')
+    reboot = SubmitField('Reboot')
+    block_number = SelectField('Block #', coerce=int)
+    delete = SubmitField('Delete Block')
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     form = ChangeSong()
@@ -66,7 +75,37 @@ def index():
     return render_template('index.html', cs_form=form, blocks=blocks, history=history)
 
 
+@app.route('/advanced', methods=['GET', 'POST'])
+def advanced():
+    form = AdvancedForm()
+    cursor = get_db().cursor()
+    blocks = cursor.execute('SELECT * FROM block_table').fetchall()
+    form.block_number.choices = [(block['block_number'], block['block_number']) for block in blocks]
+    if form.validate_on_submit():
+        if form.shutdown.data == True:
+            subprocess.call(['shutdown -h 1 "System Shutdown from Web"'], shell=True)
+            get_db().close()
+            flash('System will shutdown in 1 minute', 'success')
+        elif form.reboot.data == True:
+            #subprocess.call(['shutdown -r 1 "System Rebooted from Web"'], shell=True)
+            get_db().close()
+            flash('System will reboot in 1 minute', 'success')
+        elif form.delete.data == True:
+            query = cursor.execute('SELECT file_name FROM song_table WHERE block_number=?',
+                                   str(form.block_number.data))
+            song = query.fetchone()
+            if song is not None:
+                try:
+                    os.remove(PATH+'/Music/%s' % song['file_name'])
+                except OSError:
+                    pass
+                cursor.execute('DELETE FROM song_table WHERE block_number=?', str(form.block_number.data))
+            cursor.execute('DELETE FROM block_table WHERE block_number=?', str(form.block_number.data))
+            get_db().commit()
+            flash('Block %i deleted' % form.block_number.data, 'success')
+    return render_template('advanced.html', blocks=blocks, form=form)
+
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', debug=True)
