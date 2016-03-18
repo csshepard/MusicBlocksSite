@@ -11,7 +11,7 @@ from wtforms import StringField, SelectField, SubmitField
 from wtforms.validators import DataRequired
 
 
-#PATH = os.path.dirname('/home/pi/MusicBlocks/')
+# PATH = os.path.dirname('/home/pi/MusicBlocks/')
 PATH = os.path.dirname(__file__)
 
 app = Flask(__name__)
@@ -60,17 +60,21 @@ def index():
         cursor.execute('SELECT file_name FROM song_table WHERE block_number=?', str(form.block_number.data))
         old_file = cursor.fetchone()['file_name']
         form.file.data.save(PATH + '/Music/%s' % song)
-        cursor.execute('UPDATE song_table SET song_name=?, file_name=? WHERE block_number=?', (form.song_title.data,
-                                                                                               song, str(form.block_number.data)))
+        cursor.execute('''UPDATE song_table SET song_name=?, file_name=?
+                          WHERE block_number=?''', (form.song_title.data, song, str(form.block_number.data)))
         get_db().commit()
         try:
             if old_file != song:
                 os.remove(PATH + '/Music/%s' % old_file)
         except OSError:
             pass
-    cursor.execute('SELECT block_number, song_table.song_name, count FROM song_table LEFT OUTER JOIN (SELECT song_name AS sn, count(*) AS count FROM play_history_table GROUP BY song_name) ON song_name = sn''')
+    cursor.execute('''SELECT block_number, song_table.song_name, count FROM song_table
+                      LEFT OUTER JOIN (SELECT song_name AS sn, count(*) AS count FROM play_history_table
+                      GROUP BY song_name) ON song_name = sn''')
     blocks = cursor.fetchall()
-    cursor.execute('SELECT time_played, song_table.song_name, block_number FROM play_history_table INNER JOIN song_table ON song_table.song_name=play_history_table.song_name ORDER BY time_played DESC')
+    cursor.execute('''SELECT time_played, play_history_table.song_name, block_number FROM play_history_table
+                      LEFT OUTER JOIN song_table ON song_table.song_name=play_history_table.song_name
+                      ORDER BY time_played DESC''')
     history = cursor.fetchmany(10)
     return render_template('index.html', cs_form=form, blocks=blocks, history=history)
 
@@ -82,15 +86,15 @@ def advanced():
     blocks = cursor.execute('SELECT * FROM block_table').fetchall()
     form.block_number.choices = [(block['block_number'], block['block_number']) for block in blocks]
     if form.validate_on_submit():
-        if form.shutdown.data == True:
+        if form.shutdown.data:
             subprocess.call(['shutdown -h 1 "System Shutdown from Web"'], shell=True)
             get_db().close()
             flash('System will shutdown in 1 minute', 'success')
-        elif form.reboot.data == True:
-            #subprocess.call(['shutdown -r 1 "System Rebooted from Web"'], shell=True)
+        elif form.reboot.data:
+            subprocess.call(['shutdown -r 1 "System Rebooted from Web"'], shell=True)
             get_db().close()
             flash('System will reboot in 1 minute', 'success')
-        elif form.delete.data == True:
+        elif form.delete.data:
             query = cursor.execute('SELECT file_name FROM song_table WHERE block_number=?',
                                    str(form.block_number.data))
             song = query.fetchone()
@@ -102,6 +106,7 @@ def advanced():
                 cursor.execute('DELETE FROM song_table WHERE block_number=?', str(form.block_number.data))
             cursor.execute('DELETE FROM block_table WHERE block_number=?', str(form.block_number.data))
             get_db().commit()
+            form.block_number.choices.remove((form.block_number.data, form.block_number.data))
             flash('Block %i deleted' % form.block_number.data, 'success')
     return render_template('advanced.html', blocks=blocks, form=form)
 
