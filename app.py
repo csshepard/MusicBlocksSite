@@ -11,8 +11,8 @@ from wtforms import StringField, SelectField, SubmitField
 from wtforms.validators import DataRequired
 
 
-# PATH = os.path.dirname('/home/pi/MusicBlocks/')
-PATH = os.path.dirname(__file__)
+PATH = os.path.dirname('/home/pi/MusicBlocks/')
+# PATH = os.path.dirname(__file__)
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -87,11 +87,11 @@ def advanced():
     form.block_number.choices = [(block['block_number'], block['block_number']) for block in blocks]
     if form.validate_on_submit():
         if form.shutdown.data:
-            subprocess.call(['shutdown -h 1 "System Shutdown from Web"'], shell=True)
+            subprocess.call(['shutdown -h now "System Shutdown from Web"'], shell=True)
             get_db().close()
             flash('System will shutdown in 1 minute', 'success')
         elif form.reboot.data:
-            subprocess.call(['shutdown -r 1 "System Rebooted from Web"'], shell=True)
+            subprocess.call(['shutdown -r now "System Rebooted from Web"'], shell=True)
             get_db().close()
             flash('System will reboot in 1 minute', 'success')
         elif form.delete.data:
