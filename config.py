@@ -5,6 +5,7 @@ class Config(object):
     CSRF_ENABLED = True
     SECRET_KEY = "A\xd5p\xa3\xda\xef\x9esL\x0e\xb1\xe0\x91\xba\xc2\x90\xbeb\xb4\x84\xb0jA\xdd"
     SQLALCHEMY_DATABASE_URI = "sqlite:////home/pi/MusicBlocks/MusicBlocks.db"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     PATH = "/home/pi/MusicBlocks"
 
 class ProductionConfig(Config):
