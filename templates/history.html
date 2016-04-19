@@ -1,0 +1,33 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Music Blocks Manager{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 class="sub-header">History</h2>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Date & Time</th>
+          <th>Song Name</th>
+          <th>Block #</th>
+          <th>Length Played</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in history.items %}
+          <tr>
+            <td>{{ row.time_played.strftime('%b %m, %Y %I:%M %p') }}</td>
+            <td>{{ row.song_title }}</td>
+            <td>{{ row.block_number }}</td>
+            <td>{{ row.length_played }}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+    {% if history.has_prev %}<a href="{{ url_for('history', page=history.prev_num) }}">&lt;&lt; Newer history</a>{% else %}&lt;&lt; Newer history{% endif %} |
+{% if history.has_next %}<a href="{{ url_for('history', page=history.next_num) }}">Older history &gt;&gt;</a>{% else %}Older history &gt;&gt;{% endif %}
+</div>
+{% endblock %}
