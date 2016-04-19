@@ -27,7 +27,30 @@
       </tbody>
     </table>
   </div>
-    {% if history.has_prev %}<a href="{{ url_for('history', page=history.prev_num) }}">&lt;&lt; Newer history</a>{% else %}&lt;&lt; Newer history{% endif %} |
-{% if history.has_next %}<a href="{{ url_for('history', page=history.next_num) }}">Older history &gt;&gt;</a>{% else %}Older history &gt;&gt;{% endif %}
+<ul class="pagination">
+  {% if history.has_prev %}
+    <li><a href="{{ url_for('history', page=history.prev_num) }}">
+          <span>&laquo;</span>
+        </a>
+    </li>
+  {% else %}
+    <li class="disabled"><span>&laquo;</span></li>
+  {% endif %}
+  {% for page in range(1, history.pages+1) %}
+    {% if page == history.page %}
+      <li class="active"><span>{{ page }}</span></li>
+    {% else %}
+      <li><a href="{{ url_for('history', page=page) }}">{{ page }}</a></li>
+    {% endif %}
+  {% endfor %}
+  {% if history.has_next %}
+    <li><a href="{{ url_for('history', page=history.next_num) }}">
+        <span>&raquo;</span>
+        </a>
+    </li>
+  {% else %}
+    <li class="disabled"><span>&raquo;</span></li>
+  {% endif %}
+</ul>
 </div>
 {% endblock %}

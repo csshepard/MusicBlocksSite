@@ -13,13 +13,14 @@ from sqlalchemy import func
 
 
 app = Flask(__name__)
-app.config.from_object('config.ProductionConfig')
+app.config.from_object('config.DevelopmentConfig')
 
 db = SQLAlchemy(app)
 from models import *
 
 Bootstrap(app)
-
+app.jinja_env.trim_blocks = True
+app.jinja_env.lstrip_blocks = True
 
 class ChangeSong(Form):
     file = FileField('File', validators=[FileRequired(), FileAllowed(['mp3'], 'Mp3s only')])
@@ -81,6 +82,13 @@ def advanced():
             form.block_number.choices.remove((form.block_number.data, form.block_number.data))
             flash('Block %i deleted' % form.block_number.data, 'success')
     return render_template('advanced.html', form=form)
+
+
+@app.route('/history')
+@app.route('/history/<int:page>')
+def history(page=1):
+    history = PlayHistory.query.order_by(PlayHistory.time_played.desc()).paginate(page, 10, False)
+    return render_template('history.html', history=history)
 
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
