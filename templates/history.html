@@ -1,0 +1,56 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Music Blocks Manager{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 class="sub-header">History</h2>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Date & Time</th>
+          <th>Song Name</th>
+          <th>Block #</th>
+          <th>Length Played</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in history.items %}
+          <tr>
+            <td>{{ row.time_played.strftime('%b %m, %Y %I:%M %p') }}</td>
+            <td>{{ row.song_title }}</td>
+            <td>{{ row.block_number }}</td>
+            <td>{{ row.length_played }}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+<ul class="pagination">
+  {% if history.has_prev %}
+    <li><a href="{{ url_for('history', page=history.prev_num) }}">
+          <span>&laquo;</span>
+        </a>
+    </li>
+  {% else %}
+    <li class="disabled"><span>&laquo;</span></li>
+  {% endif %}
+  {% for page in range(1, history.pages+1) %}
+    {% if page == history.page %}
+      <li class="active"><span>{{ page }}</span></li>
+    {% else %}
+      <li><a href="{{ url_for('history', page=page) }}">{{ page }}</a></li>
+    {% endif %}
+  {% endfor %}
+  {% if history.has_next %}
+    <li><a href="{{ url_for('history', page=history.next_num) }}">
+        <span>&raquo;</span>
+        </a>
+    </li>
+  {% else %}
+    <li class="disabled"><span>&raquo;</span></li>
+  {% endif %}
+</ul>
+</div>
+{% endblock %}
